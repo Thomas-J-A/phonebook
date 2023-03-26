@@ -58,20 +58,23 @@ app.post('/api/persons', (req, res) => {
   });
 
   // Check if name already exists in phonebook
-  const existingUser = persons.find((p) => p.name === body.name);
+  // const existingUser = persons.find((p) => p.name === body.name);
 
-  if (existingUser) return res.status(409).json({
-    error: 'Name already exists.',
-  })
+  // if (existingUser) return res.status(409).json({
+  //   error: 'Name already exists.',
+  // })
 
-  const person = {
-    id: generateId(5000),
+  const person = new Person({
     name: body.name,
     number: body.number,
-  };
+  });
 
-  persons = persons.concat(person);
-  res.json(person);
+  // Save person and return to client
+  person
+    .save()
+    .then((p) => {
+      res.json(p);
+    });
 });
 
 app.get('/api/persons/:id', (req, res) => {
