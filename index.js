@@ -2,11 +2,15 @@ const express = require('express');
 const logger = require('morgan');
 const cors = require('cors');
 
+// Import and setup env variables from .env file
+require('dotenv').config();
+
 const generateId = require('./generateId');
-let persons = require('./persons');
+// let persons = require('./persons');
+const Person = require('./models/person');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT;
 const logFormatStr = (
   ':method :url :status :res[content-length] - :response-time ms :body'
 );
@@ -33,7 +37,12 @@ app.get('/info', (req, res) => {
 });
 
 app.get('/api/persons', (req, res) => {
-  res.status(200).json(persons);
+  // res.status(200).json(persons);
+  Person
+    .find({})
+    .then((persons) => {
+      res.status(200).json(persons);
+    });
 });
 
 app.post('/api/persons', (req, res) => {
