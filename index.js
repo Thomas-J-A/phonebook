@@ -5,8 +5,7 @@ const cors = require('cors');
 // Import and setup env variables from .env file
 require('dotenv').config();
 
-const generateId = require('./generateId');
-// let persons = require('./persons');
+// const generateId = require('./generateId');
 const Person = require('./models/person');
 
 const app = express();
@@ -23,17 +22,22 @@ app.use(express.static('dist'));
 app.use(express.json());
 app.use(cors());
 
-app.get('/info', (req, res) => {
+app.get('/info', (req, res, next) => {
   const requestTime = new Date();
-  const totalEntries = persons.length;
-  const html = `
-    <div>
-      <p>Phonebook currently has ${ totalEntries } entries.</p>
-      <p>Request received: ${ requestTime }</p>
-    </div>
-  `;
 
-  res.status(200).send(html);
+  Person
+    .countDocuments({})
+    .then((count) => {
+      const html = `
+        <div>
+          <p>Phonebook currently has ${ count } ${ count === 1 ? 'entry' : 'entries' }.</p>
+          <p>Request received: ${ requestTime }</p>
+        </div>
+      `;
+    
+      res.status(200).send(html);
+    })
+    .catch((err) => next(err));
 });
 
 app.get('/api/persons', (req, res) => {
@@ -50,11 +54,11 @@ app.post('/api/persons', (req, res) => {
 
   // Check that name and number fields were sent in request
   if (!body.name) return res.status(400).json({
-    error: 'Name field missing.',
+    error: 'Name field missing',
   });
 
   if (!body.number) return res.status(400).json({
-    error: 'Number field missing.',
+    error: 'Number field missing',
   });
 
   // Check if name already exists in phonebook
@@ -77,22 +81,58 @@ app.post('/api/persons', (req, res) => {
     });
 });
 
-app.get('/api/persons/:id', (req, res) => {
-  const id = Number(req.params.id);
-  const person = persons.find((p) => p.id === id);
+app.get('/api/persons/:id', (req, res, next) => {
+  const id = req.params.id;
 
-  if (person) {
-    res.status(200).json(person);
-  } else {
-    res.status(404).end();
-  }
+  Person
+    .findById(id)
+    .then((person) => {
+      if (person) {
+        // Person with matching id found
+        return res.status(200).json(person);
+      }
+
+      // id not found
+      res.status(404).end();
+    })
+    .catch((err) => next(err));
 });
 
-app.delete('/api/persons/:id', (req, res) => {
-  const id = Number(req.params.id);
-  persons = persons.filter((p) => p.id !== id);
+app.put('/api/persons/:id', (req, res, next) => {
+  const body = req.body;
+  const id = req.params.id;
 
-  res.status(204).end();
+  // Client must send number field
+  if (!body.number) return res.status(400).json({
+    error: 'Number field missing',
+  });
+
+  Person
+    .findByIdAndUpdate(id, { number: body.number }, { new: true })
+    .then((updatedPerson) => {
+      res.status(200).json(updatedPerson);
+    })
+    .catch((err) => next(err));
+});
+
+app.delete('/api/persons/:id', (req, res, next) => {
+  Person
+    .findByIdAndRemove(req.params.id)
+    .then((doc) => {
+      res.status(204).end();
+    })
+    .catch((err) => next(err));
+});
+
+app.use((err, req, res, next) => {
+  console.log(err);
+
+  if (err.name === 'CastError') {
+    return res.status(400).json({ error: 'Malformatted id' });
+  }
+
+  // Any other types of errors get generic response 
+  res.status(500).json({ error: 'Something went wrong' });
 });
 
 app.listen(PORT, () => {
