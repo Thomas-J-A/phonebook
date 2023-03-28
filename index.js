@@ -41,7 +41,6 @@ app.get('/info', (req, res, next) => {
 });
 
 app.get('/api/persons', (req, res) => {
-  // res.status(200).json(persons);
   Person
     .find({})
     .then((persons) => {
@@ -49,7 +48,7 @@ app.get('/api/persons', (req, res) => {
     });
 });
 
-app.post('/api/persons', (req, res) => {
+app.post('/api/persons', (req, res, next) => {
   const body = req.body;
 
   // Check that name and number fields were sent in request
@@ -77,8 +76,9 @@ app.post('/api/persons', (req, res) => {
   person
     .save()
     .then((p) => {
-      res.json(p);
-    });
+      res.status(201).json(p);
+    })
+    .catch((err) => next(err));
 });
 
 app.get('/api/persons/:id', (req, res, next) => {
@@ -108,7 +108,11 @@ app.put('/api/persons/:id', (req, res, next) => {
   });
 
   Person
-    .findByIdAndUpdate(id, { number: body.number }, { new: true })
+    .findByIdAndUpdate(
+      id,
+      { number: body.number },
+      { new: true, runValidators: true, context: 'query' }
+    )
     .then((updatedPerson) => {
       res.status(200).json(updatedPerson);
     })
@@ -129,6 +133,10 @@ app.use((err, req, res, next) => {
 
   if (err.name === 'CastError') {
     return res.status(400).json({ error: 'Malformatted id' });
+  }
+
+  if (err.name === 'ValidationError') {
+    return res.status(400).json({ error: err.message });
   }
 
   // Any other types of errors get generic response 

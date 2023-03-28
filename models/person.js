@@ -14,8 +14,18 @@ mongoose
 
 // Create a Person schema
 const personSchema = new mongoose.Schema({
-  name: String,
-  number: Number,
+  name: {
+    type: String,
+    minLength: [3, '{PATH} must be at least 3 characters'],
+  },
+  number: {
+    type: String,
+    minLength: [8, '{PATH} must be at least 8 digits'],
+    validate: {
+      validator: (val) => /^\d{2,3}-\d+$/.test(val),
+      message: (props) => `${ props.value } is not a valid number`,
+    },
+  },
 });
 
 // Modify data when it is sent back to client
