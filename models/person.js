@@ -23,7 +23,7 @@ const personSchema = new mongoose.Schema({
     minLength: [8, '{PATH} must be at least 8 digits'],
     validate: {
       validator: (val) => /^\d{2,3}-\d+$/.test(val),
-      message: (props) => `${ props.value } is not a valid number`,
+      message: (props) => `${props.value} is not a valid number`,
     },
   },
 });

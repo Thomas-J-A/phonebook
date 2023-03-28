@@ -9,7 +9,7 @@ require('dotenv').config();
 const Person = require('./models/person');
 
 const app = express();
-const PORT = process.env.PORT;
+const { PORT } = process.env;
 const logFormatStr = (
   ':method :url :status :res[content-length] - :response-time ms :body'
 );
@@ -30,12 +30,12 @@ app.get('/info', (req, res, next) => {
     .then((count) => {
       const html = `
         <div>
-          <p>Phonebook currently has ${ count } ${ count === 1 ? 'entry' : 'entries' }.</p>
-          <p>Request received: ${ requestTime }</p>
+          <p>Phonebook currently has ${count} ${count === 1 ? 'entry' : 'entries'}.</p>
+          <p>Request received: ${requestTime}</p>
         </div>
       `;
-    
-      res.status(200).send(html);
+
+      return res.status(200).send(html);
     })
     .catch((err) => next(err));
 });
@@ -43,22 +43,24 @@ app.get('/info', (req, res, next) => {
 app.get('/api/persons', (req, res) => {
   Person
     .find({})
-    .then((persons) => {
-      res.status(200).json(persons);
-    });
+    .then((persons) => res.status(200).json(persons));
 });
 
 app.post('/api/persons', (req, res, next) => {
-  const body = req.body;
+  const { body } = req;
 
   // Check that name and number fields were sent in request
-  if (!body.name) return res.status(400).json({
-    error: 'Name field missing',
-  });
+  if (!body.name) {
+    return res.status(400).json({
+      error: 'Name field missing',
+    });
+  }
 
-  if (!body.number) return res.status(400).json({
-    error: 'Number field missing',
-  });
+  if (!body.number) {
+    return res.status(400).json({
+      error: 'Number field missing',
+    });
+  }
 
   // Check if name already exists in phonebook
   // const existingUser = persons.find((p) => p.name === body.name);
@@ -73,16 +75,14 @@ app.post('/api/persons', (req, res, next) => {
   });
 
   // Save person and return to client
-  person
+  return person
     .save()
-    .then((p) => {
-      res.status(201).json(p);
-    })
+    .then((p) => res.status(201).json(p))
     .catch((err) => next(err));
 });
 
 app.get('/api/persons/:id', (req, res, next) => {
-  const id = req.params.id;
+  const { id } = req.params;
 
   Person
     .findById(id)
@@ -93,38 +93,36 @@ app.get('/api/persons/:id', (req, res, next) => {
       }
 
       // id not found
-      res.status(404).end();
+      return res.status(404).end();
     })
     .catch((err) => next(err));
 });
 
 app.put('/api/persons/:id', (req, res, next) => {
-  const body = req.body;
-  const id = req.params.id;
+  const { body } = req;
+  const { id } = req.params;
 
   // Client must send number field
-  if (!body.number) return res.status(400).json({
-    error: 'Number field missing',
-  });
+  if (!body.number) {
+    return res.status(400).json({
+      error: 'Number field missing',
+    });
+  }
 
-  Person
+  return Person
     .findByIdAndUpdate(
       id,
       { number: body.number },
-      { new: true, runValidators: true, context: 'query' }
+      { new: true, runValidators: true, context: 'query' },
     )
-    .then((updatedPerson) => {
-      res.status(200).json(updatedPerson);
-    })
+    .then((updatedPerson) => res.status(200).json(updatedPerson))
     .catch((err) => next(err));
 });
 
 app.delete('/api/persons/:id', (req, res, next) => {
   Person
     .findByIdAndRemove(req.params.id)
-    .then((doc) => {
-      res.status(204).end();
-    })
+    .then(() => res.status(204).end())
     .catch((err) => next(err));
 });
 
@@ -139,10 +137,10 @@ app.use((err, req, res, next) => {
     return res.status(400).json({ error: err.message });
   }
 
-  // Any other types of errors get generic response 
-  res.status(500).json({ error: 'Something went wrong' });
+  // Any other types of errors get generic response
+  return res.status(500).json({ error: 'Something went wrong' });
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${ PORT }`)
+  console.log(`Server running on port ${PORT}`);
 });

@@ -11,7 +11,7 @@ if (argsLength < 3) {
 
 const password = process.argv[2];
 const url = (
-  `mongodb+srv://fullstack:${ password }@cluster0.wlwlrlf.mongodb.net/phonebook?retryWrites=true&w=majority`
+  `mongodb+srv://fullstack:${password}@cluster0.wlwlrlf.mongodb.net/phonebook?retryWrites=true&w=majority`
 );
 
 mongoose.connect(url);
@@ -32,7 +32,7 @@ if (argsLength === 3) {
     .then((persons) => {
       console.log('Phonebook entries:');
       persons.forEach((p) => (
-        console.log(`Name: ${ p.name } | Number: ${ p.number }`)
+        console.log(`Name: ${p.name} | Number: ${p.number}`)
       ));
       mongoose.connection.close();
     });
@@ -48,7 +48,7 @@ if (argsLength === 5) {
   person
     .save()
     .then(() => {
-      console.log(`Added ${ person.name } with number ${ person.number } to phonebook.`);
+      console.log(`Added ${person.name} with number ${person.number} to phonebook.`);
       mongoose.connection.close();
     });
 }
